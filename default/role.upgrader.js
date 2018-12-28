@@ -18,19 +18,26 @@ module.exports = {
 			if (creep.room.name == creep.memory.home) {
 				if (creep.pos.getRangeTo(container) <= 1) {
 					creep.say('🎶');
-					creep.moveTo(creep.room.controller);
+					creep.moveRandom();
 				}
 				if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
 					creep.moveTo(creep.room.controller);
+				} else {
+					creep.moveRandomWithin(creep.room.controller);
 				}
 			} else {
 				var exit = creep.room.findExitTo(creep.memory.home);
 				creep.moveTo(creep.pos.findClosestByRange(exit));
 				creep.say('🏠');
 			}
-		}
-		else {
-			creep.getEnergy(true, true);
+		}	else {
+			if (creep.room.name == creep.memory.home) {
+				creep.getEnergy(true, true);
+			} else {
+				let exit = creep.room.findExitTo(creep.memory.home);
+				creep.moveTo(creep.pos.findClosestByRange(exit));
+				creep.say('🏠');
+			}
 		}
 	}
 };

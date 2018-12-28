@@ -15,9 +15,9 @@ module.exports = {
 			if (creep.room.name == creep.memory.home) {
 				var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
 					filter: (s) => (s.structureType == STRUCTURE_SPAWN
-								 || s.structureType == STRUCTURE_EXTENSION
-								 || s.structureType == STRUCTURE_TOWER)
-								 && s.energy < s.energyCapacity
+											|| s.structureType == STRUCTURE_EXTENSION
+											|| s.structureType == STRUCTURE_TOWER)
+											&& s.energy < s.energyCapacity
 				});
 
 				if (target == undefined) {
@@ -25,25 +25,34 @@ module.exports = {
 				}
 
 				if (target != undefined) {
-					if (creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-						creep.moveTo(target);
+					if (creep.hits == creep.hitsMax) {
+						if (creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+							creep.moveTo(target);
+						}
 					}
 				}
 			} else {
-				var exit = creep.room.findExitTo(creep.memory.home);
+				let exit = creep.room.findExitTo(creep.memory.home);
 				creep.moveTo(creep.pos.findClosestByRange(exit));
 				creep.say('🏠');
 			}
-		}
-		else {
-			if (creep.room.name == creep.memory.target) {
-				var source = creep.room.find(FIND_SOURCES)[creep.memory.sourceIndex];
+		}	else {
+			if (creep.hits != creep.hitsMax) {
+				let exit = creep.room.findExitTo(creep.memory.home);
+				creep.moveTo(creep.pos.findClosestByRange(exit));
+				creep.say('🏠');
+			} else if (creep.room.name == creep.memory.target) {
+				let source = creep.room.find(FIND_SOURCES)[creep.memory.sourceIndex];
 				if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
 					creep.moveTo(source);
 				}
 			} else {
-				var exit = creep.room.findExitTo(creep.memory.target);
-				creep.moveTo(creep.pos.findClosestByRange(exit));
+				if (creep.room.name == creep.memory.home) {
+					creep.moveTo(creep.room.storage);
+				} else {
+					let exit = creep.room.findExitTo(creep.memory.target);
+					creep.moveTo(creep.pos.findClosestByRange(exit));
+				}
 			}
 		}
 	}

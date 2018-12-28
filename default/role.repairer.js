@@ -32,7 +32,7 @@ module.exports = {
 				if (structure != undefined) {
 					if (creep.pos.getRangeTo(container) <= 1) {
 						creep.say('🎶');
-						creep.moveTo(creep.room.controller);
+						creep.moveRandomWithin(structure);
 					}
 					let ramparts = creep.room.find(FIND_STRUCTURES, {
 						filter: (r) => (r.hits / r.hitsMax) < 0.2 && r.structureType == STRUCTURE_RAMPART
@@ -61,9 +61,14 @@ module.exports = {
 				creep.moveTo(creep.pos.findClosestByRange(exit));
 				creep.say('🏠');
 			}
-		}
-		else {
-			creep.getEnergy(true, true);
+		}	else {
+			if (creep.room.name == creep.memory.home) {
+				creep.getEnergy(true, true);
+			} else {
+				let exit = creep.room.findExitTo(creep.memory.home);
+				creep.moveTo(creep.pos.findClosestByRange(exit));
+				creep.say('🏠');
+			}
 		}
 	}
 };

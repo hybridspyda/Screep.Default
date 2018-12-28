@@ -34,7 +34,17 @@ module.exports = {
 				} else {
 					if (creep.pos.getRangeTo(container) <= 1) {
 						creep.say('🎶');
+						creep.moveRandom();
+					} else {
+						/*if(creep.room.controller) {
+							if(creep.signController(creep.room.controller, "Powered by HybridAI.") == ERR_NOT_IN_RANGE) {
+								creep.moveTo(creep.room.controller);
+							}
+						}*/
 						creep.moveTo(creep.room.controller);
+						if (creep.pos.getRangeTo(creep.room.controller) <= 3) {
+							creep.drop(RESOURCE_ENERGY);
+						}
 					}
 				}
 			} else {
@@ -42,9 +52,14 @@ module.exports = {
 				creep.moveTo(creep.pos.findClosestByRange(exit));
 				creep.say('🏠');
 			}
-		}
-		else {
-			creep.getEnergy(true, false);
+		}	else {
+			if (creep.room.name == creep.memory.home) {
+				creep.getEnergy(true, false, false);
+			} else {
+				let exit = creep.room.findExitTo(creep.memory.home);
+				creep.moveTo(creep.pos.findClosestByRange(exit));
+				creep.say('🏠');
+			}
 		}
 	}
 };

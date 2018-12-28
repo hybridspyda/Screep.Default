@@ -1,4 +1,4 @@
-var roleBuilder = require('role.builder');
+var roleRepairer = require('role.repairer');
 
 module.exports = {
 	/** @param {Creep} creep **/
@@ -36,20 +36,26 @@ module.exports = {
 				}
 
 				if (target != undefined) {
+					//creep.log(`${target}`)
 					if (creep.repair(target) == ERR_NOT_IN_RANGE) {
 						creep.moveTo(target);
 					}
 				} else {
-					roleBuilder.run(creep);
+					roleRepairer.run(creep);
 				}
 			} else {
 				var exit = creep.room.findExitTo(creep.memory.home);
 				creep.moveTo(creep.pos.findClosestByRange(exit));
 				creep.say('🏠');
 			}
-		}
-		else {
-			creep.getEnergy(true, true);
+		}	else {
+			if (creep.room.name == creep.memory.home) {
+				creep.getEnergy(true, true);
+			} else {
+				let exit = creep.room.findExitTo(creep.memory.home);
+				creep.moveTo(creep.pos.findClosestByRange(exit));
+				creep.say('🏠');
+			}
 		}
 	}
 };

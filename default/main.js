@@ -2,6 +2,7 @@
 require('prototype.creep');
 require('prototype.tower');
 require('prototype.spawn');
+require('utils');
 
 module.exports.loop = function () {
 	// check for memory entries of died creeps by iterating of Memory.creeps
