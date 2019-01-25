@@ -30,6 +30,20 @@ module.exports = {
 							creep.moveTo(target);
 						}
 					}
+				} else {
+					var spawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+							filter: (s) => (s.structureType == STRUCTURE_SPAWN)
+					});
+					if (spawn != undefined) {
+							if (creep.pos.getRangeTo(spawn) > 3) {
+									creep.moveTo(spawn);
+							} else {
+									creep.moveRandomWithin(spawn, 3);
+									if (creep.pos.getRangeTo(spawn) == 1) {
+											creep.drop(RESOURCE_ENERGY);
+									}
+							}
+					}
 				}
 			} else {
 				let exit = creep.room.findExitTo(creep.memory.home);
@@ -47,12 +61,8 @@ module.exports = {
 					creep.moveTo(source);
 				}
 			} else {
-				if (creep.room.name == creep.memory.home) {
-					creep.moveTo(creep.room.storage);
-				} else {
-					let exit = creep.room.findExitTo(creep.memory.target);
-					creep.moveTo(creep.pos.findClosestByRange(exit));
-				}
+				let exit = creep.room.findExitTo(creep.memory.target);
+				creep.moveTo(creep.pos.findClosestByRange(exit));
 			}
 		}
 	}

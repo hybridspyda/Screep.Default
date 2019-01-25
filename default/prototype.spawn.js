@@ -5,10 +5,11 @@ var listOfRoles = [
 	'upgrader',
 	'repairer',
 	'builder',
-	'wallRepairer'
+	'wallRepairer',
+	'defender'
 ];
 
-StructureSpawn.prototype.spawnCreepsIfNecessary =	function() {
+StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 	/** @type {Room} */
 	let room = this.room;
 	// find all creeps in room
@@ -39,7 +40,8 @@ StructureSpawn.prototype.spawnCreepsIfNecessary =	function() {
 				lorry: 0,
 				repairer: 1,
 				upgrader: 1,
-				wallRepairer: 1
+				wallRepairer: 1,
+				defender: 1
 			};
 		}
 		if (!this.memory.minLongDistanceHarvesters) {
@@ -92,7 +94,7 @@ StructureSpawn.prototype.spawnCreepsIfNecessary =	function() {
 		for (let role of listOfRoles) {
 			// check for claim order
 			// set claim order with:
-			// Game.spawns.HybridSpawn.memory.claimRoom = '<Room>'
+			// Game.spawns.<SpawnName>.memory.claimRoom = '<Room>'
 			if (role == 'claimer' && this.memory.claimRoom != undefined) {
 				// try to spawn a claimer
 				name = this.createClaimer(maxEnergy, this.memory.claimRoom);
@@ -112,6 +114,8 @@ StructureSpawn.prototype.spawnCreepsIfNecessary =	function() {
 						// create a small lorry
 						name = this.createLorry(150, room.name);
 					}
+				} else if (role == 'defender') {
+				    name = this.createDefender(maxEnergy, room.name);
 				} else {
 					name = this.createCustomCreep(maxEnergy, role, room.name);
 				}
@@ -235,6 +239,22 @@ StructureSpawn.prototype.createLorry = function(energy, home) {
 		working: false
 	});
 };
+
+StructureSpawn.prototype.createDefender = function(energy, home) {
+    var numberOfParts = Math.floor(energy / 500);
+    var body = [];
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(MOVE);
+        body.push(RANGED_ATTACK);
+        body.push(MOVE);
+        body.push(HEAL);
+    }
+    
+    return this.createCreep(body, undefined, {
+        role: 'defender',
+        home: home
+    })
+}
 
 StructureSpawn.prototype.maintainRoadFlags = function() {
 	let roadFlags = this.room.find(FIND_FLAGS, {

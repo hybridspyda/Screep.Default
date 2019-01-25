@@ -7,14 +7,15 @@ var roles = {
 	longDistanceHarvester: require('role.longDistanceHarvester'),
 	claimer: require('role.claimer'),
 	miner: require('role.miner'),
-	lorry: require('role.lorry')
+	lorry: require('role.lorry'),
+	defender: require('role.defender')
 };
 
 Creep.prototype.runRole = function () {
 	if (roles[this.memory.role] != undefined) {
 		roles[this.memory.role].run(this);
 	} else {
-		console.log(this.name+" has an invalid role!");
+		this.log(`${this.name} has an invalid role!`);
 	}
 	if (this.ticksToLive < 25) {
 		this.say('☠');

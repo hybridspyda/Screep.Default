@@ -53,8 +53,19 @@ module.exports = {
 						creep.moveTo(structure);
 					}
 				} else { // if we can't fine one
-					// upgrade!
-					roleUpgrader.run(creep);
+					let constructionSite = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES, {
+						filter: (cs) => (cs.structureType == STRUCTURE_RAMPART)
+					});
+					if (constructionSite != undefined) {
+						if (creep.build(constructionSite) == ERR_NOT_IN_RANGE) {
+							creep.moveTo(constructionSite);
+						} else {
+							creep.moveRandomWithin(constructionSite);
+						}
+					} else {
+						// upgrade!
+						roleUpgrader.run(creep);
+					}
 				}
 			} else {
 				var exit = creep.room.findExitTo(creep.memory.home);

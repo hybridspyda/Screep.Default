@@ -17,31 +17,43 @@ module.exports = {
 		});
 		if (creep.memory.working) {
 			if (creep.room.name == creep.memory.home) {
-				var walls = creep.room.find(FIND_STRUCTURES, {
-					filter: (s) => s.structureType == STRUCTURE_WALL
+				let constructionSite = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES, {
+					filter: (cs) => (cs.structureType == STRUCTURE_WALL
+												|| cs.structureType == STRUCTURE_RAMPART)
 				});
+				if (constructionSite != undefined) {
+					if (creep.build(constructionSite) == ERR_NOT_IN_RANGE) {
+						creep.moveTo(constructionSite);
+					} else {
+						creep.moveRandomWithin(constructionSite);
+					}
+				} else {
+					var walls = creep.room.find(FIND_STRUCTURES, {
+						filter: (s) => s.structureType == STRUCTURE_WALL
+					});
 
-				var target = undefined;
-				for (let percentage = 0.0001; percentage <= 1; percentage = percentage + 0.0001) {
-					for (let wall of walls) {
-						if (wall.hits / wall.hitsMax < percentage) {
-							target = wall;
+					var target = undefined;
+					for (let percentage = 0.0001; percentage <= 1; percentage = percentage + 0.0001) {
+						for (let wall of walls) {
+							if (wall.hits / wall.hitsMax < percentage) {
+								target = wall;
+								break;
+							}
+						}
+
+						if (target != undefined) {
 							break;
 						}
 					}
 
 					if (target != undefined) {
-						break;
+						//creep.log(`${target}`)
+						if (creep.repair(target) == ERR_NOT_IN_RANGE) {
+							creep.moveTo(target);
+						}
+					} else {
+						roleRepairer.run(creep);
 					}
-				}
-
-				if (target != undefined) {
-					//creep.log(`${target}`)
-					if (creep.repair(target) == ERR_NOT_IN_RANGE) {
-						creep.moveTo(target);
-					}
-				} else {
-					roleRepairer.run(creep);
 				}
 			} else {
 				var exit = creep.room.findExitTo(creep.memory.home);
