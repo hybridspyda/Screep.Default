@@ -18,7 +18,7 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 
 	// count the number of creeps alive for each role in this room
 	// _.sum will count the number of properties in Game.creeps filtered by the
-	//  arrow function, which checks for the creep being a specific role
+	//	arrow function, which checks for the creep being a specific role
 	/** @type {Object.<string, number>} */
 	let numberOfCreeps = {};
 	for (let role of listOfRoles) {
@@ -35,13 +35,13 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 		// Initialization not done: do it
 		if (!this.memory.minCreeps) {
 			this.memory.minCreeps = {
-				builder: 2,
-				harvester: 4,
 				lorry: 0,
-				repairer: 1,
+				harvester: 3,
+				defender: 1,
+				builder: 2,
 				upgrader: 1,
-				wallRepairer: 1,
-				defender: 1
+				repairer: 1,
+				wallRepairer: 1
 			};
 		}
 		if (!this.memory.minLongDistanceHarvesters) {
@@ -54,15 +54,15 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 		this.memory.init = true;
 	}
 
-	// if no harvesters are left AND either no miners or no lorries are left
+	// if no harvesters are left AND no lorries are left
 	// create a backup creep
-	if (numberOfCreeps['harvester'] == 0 && numberOfCreeps['lorry'] == 0) {
-		// if there are still miners of enough energy in Storage left
-		if (numberOfCreeps['miner'] > 0
-		|| (room.storage != undefined && room.storage.store[RESOURCE_ENERGY] >= 150 + 550)) {
+	if ((numberOfCreeps['harvester'] == undefined && this.memory.minCreeps['harvester'] > 0)
+	|| (numberOfCreeps['lorry'] == undefined && this.memory.minCreeps['lorry'] > 0)) {
+		// if there are still miners
+		if (numberOfCreeps['miner'] > 0) {
 			// create a small lorry
-			name = this.createLorry(150, room.name);
-		} else { // if there is no miner and not enough energy in Storage left
+			name = this.createLorry(room.energyAvailable, room.name);
+		} else { // if there is no miner
 			// create a harvester because it can work on its own
 			name = this.createCustomCreep(room.energyAvailable, 'harvester', room.name);
 		}
@@ -115,7 +115,7 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 						name = this.createLorry(150, room.name);
 					}
 				} else if (role == 'defender') {
-				    name = this.createDefender(maxEnergy, room.name);
+						name = this.createDefender(maxEnergy, room.name);
 				} else {
 					name = this.createCustomCreep(maxEnergy, role, room.name);
 				}
@@ -134,7 +134,7 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 				c.memory.role == 'longDistanceHarvester' && c.memory.target == roomName)
 
 			if (numberOfLongDistanceHarvesters[roomName] < this.memory.minLongDistanceHarvesters[roomName]) {
-				name = this.createLongDistanceHarvester(maxEnergy, 3, room.name, roomName, 0);
+				name = this.createLongDistanceHarvester(maxEnergy, 3, room.name, roomName);
 			}
 		}
 	}
@@ -143,14 +143,14 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function() {
 	if (name != undefined && _.isString(name)) {
 		for (let role of listOfRoles) {
 			if(Game.creeps[name].memory.role != 'claimer') {
-				console.log(`${role}: ${numberOfCreeps[role]} of ${this.memory.minCreeps[role]}`);
+				this.log(`${role}: ${numberOfCreeps[role]} of ${this.memory.minCreeps[role]}`);
 			}
 		}
 		for (let roomName in this.memory.minLongDistanceHarvesters) {
 			numberOfLongDistanceHarvesters[roomName] = _.sum(Game.creeps, (c) =>
 				c.memory.role == 'longDistanceHarvester' && c.memory.target == roomName)
 			
-			console.log(`LongDistanceHarvester${roomName}: ${numberOfLongDistanceHarvesters[roomName]}`);
+			this.log(`LongDistanceHarvester${roomName}: ${numberOfLongDistanceHarvesters[roomName]}`);
 		}
 		this.log(`Spawning new ${Game.creeps[name].memory.role} (${name})`);
 	}
@@ -169,14 +169,17 @@ StructureSpawn.prototype.createCustomCreep = function(energy, roleName, home) {
 		body.push(MOVE);
 	}
 
-	return this.createCreep(body, undefined, {
+	let n = `${roleName}-${Math.floor(Math.random() * 1000)}`;
+	return this.createCreep(body, n, {
 		role: roleName,
 		home: home,
-		working: false
+		target: undefined,
+		working: false,
+		secondaryRole: undefined
 	});
 };
 
-StructureSpawn.prototype.createLongDistanceHarvester = function(energy, numberOfWorkParts, home, target, sourceIndex) {
+StructureSpawn.prototype.createLongDistanceHarvester = function(energy, numberOfWorkParts, home, target) {
 	var body = [];
 	for (let i = 0; i < numberOfWorkParts; i++) {
 		body.push(WORK);
@@ -192,11 +195,11 @@ StructureSpawn.prototype.createLongDistanceHarvester = function(energy, numberOf
 		body.push(MOVE);
 	}
 
-	return this.createCreep(body, undefined, {
+	let n = `LDH-${Math.floor(Math.random() * 1000)}`;
+	return this.createCreep(body, n, {
 		role: 'longDistanceHarvester',
 		home: home,
 		target: target,
-		sourceIndex: sourceIndex,
 		working: false
 	});
 };
@@ -209,14 +212,17 @@ StructureSpawn.prototype.createClaimer = function(energy, target) {
 		body.push(CLAIM);
 	}
 
-	return this.createCreep(body, undefined, {
+	let n = `claimer-${Math.floor(Math.random() * 1000)}`;
+	return this.createCreep(body, n, {
 		role: 'claimer',
-		target: target
+		target: target,
+		blockingWall: undefined
 	});
 };
 
 StructureSpawn.prototype.createMiner = function(sourceId, home) {
-	return this.createCreep([WORK,WORK,WORK,WORK,WORK,MOVE], undefined, {
+	let n = `miner-${Math.floor(Math.random() * 1000)}`;
+	return this.createCreep([WORK,WORK,WORK,WORK,WORK,MOVE], n, {
 		role: 'miner',
 		sourceId: sourceId,
 		home: home
@@ -233,27 +239,31 @@ StructureSpawn.prototype.createLorry = function(energy, home) {
 		body.push(MOVE);
 	}
 
-	return this.createCreep(body, undefined, {
+	let n = `lorry-${Math.floor(Math.random() * 1000)}`;
+	return this.createCreep(body, n, {
 		role: 'lorry',
 		home: home,
+		target: undefined,
 		working: false
 	});
 };
 
 StructureSpawn.prototype.createDefender = function(energy, home) {
-    var numberOfParts = Math.floor(energy / 500);
-    var body = [];
-    for (let i = 0; i < numberOfParts; i++) {
-        body.push(MOVE);
-        body.push(RANGED_ATTACK);
-        body.push(MOVE);
-        body.push(HEAL);
-    }
-    
-    return this.createCreep(body, undefined, {
-        role: 'defender',
-        home: home
-    })
+	var numberOfParts = Math.floor(energy / 500);
+	var body = [];
+	for (let i = 0; i < numberOfParts; i++) {
+		body.push(MOVE);
+		body.push(RANGED_ATTACK);
+		body.push(MOVE);
+		body.push(HEAL);
+	}
+	
+	let n = `defender-${Math.floor(Math.random() * 1000)}`;
+	return this.createCreep(body, n, {
+		role: 'defender',
+		home: home,
+		target: undefined
+	})
 }
 
 StructureSpawn.prototype.maintainRoadFlags = function() {
@@ -268,47 +278,40 @@ StructureSpawn.prototype.maintainRoadFlags = function() {
 		});
 		if (flag == undefined) {
 			// if not, delete the memory entry
-			console.log("Clearing non-existing flag memory: "+flag.name);
+			this.log(`Clearing non-existing flag memory: ${flag.name}`);
 			delete this.memory.roadFlagTimers[roadFlags[i].name];
 		} else {
-			//console.log(roadFlags[i].name+' has '+this.memory.roadFlagTimers[roadFlags[i].name]+' ticks');
 			if (!this.memory.roadFlagTimers[roadFlags[i].name]) {
 				this.memory.roadFlagTimers[roadFlags[i].name] = 60;
 			} else {
 				if (this.memory.roadFlagTimers[roadFlags[i].name] - 1 == 0) {
 					switch(roadFlags[i].secondaryColor) {
 						case COLOR_BLUE:
-							//console.log(roadFlags[i].name+' removal!');
 							roadFlags[i].remove();
 							delete this.memory.roadFlagTimers[roadFlags[i].name];
 							break;
 						case COLOR_PURPLE:
-							//console.log(roadFlags[i].name+' downgrade to COLOR_BLUE');
 							roadFlags[i].setColor(COLOR_GREY, COLOR_BLUE);
 							this.memory.roadFlagTimers[roadFlags[i].name] = 60;
 							break;
 						case COLOR_RED:
-							//console.log(roadFlags[i].name+' downgrade to COLOR_PURPLE');
 							roadFlags[i].setColor(COLOR_GREY, COLOR_PURPLE);
 							this.memory.roadFlagTimers[roadFlags[i].name] = 60;
 							break;
 						case COLOR_ORANGE:
-							//console.log(roadFlags[i].name+' downgrade to COLOR_RED');
 							roadFlags[i].setColor(COLOR_GREY, COLOR_RED);
 							this.memory.roadFlagTimers[roadFlags[i].name] = 60;
 							break;
 						case COLOR_YELLOW:
-							//console.log(roadFlags[i].name+' downgrade to COLOR_ORANGE');
 							roadFlags[i].setColor(COLOR_GREY, COLOR_ORANGE);
 							this.memory.roadFlagTimers[roadFlags[i].name] = 60;
 							break;
 						case COLOR_GREEN:
-							//console.log(roadFlags[i].name+' downgrade to COLOR_YELLOW');
 							roadFlags[i].setColor(COLOR_GREY, COLOR_YELLOW);
 							this.memory.roadFlagTimers[roadFlags[i].name] = 60;
 							break;
 						default:
-							console.log('roadFlag Error (downgrade) at: '+this.pos);
+							this.log(`roadFlag Error (downgrade) at: ${this.pos}`);
 							break;
 					}
 				} else {

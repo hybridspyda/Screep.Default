@@ -37,7 +37,6 @@ Creep.prototype.moveRandom = function() {
 		if (pos.isExit()) {
 			continue;
 		}
-
 		break;
 	}
 	this.move(direction);
@@ -69,10 +68,7 @@ Creep.prototype.getEnergy = function (useContainer, useSource, pickDropped=true)
 	if (useContainer) {
 		// find closest container
 		container = this.pos.findClosestByPath(FIND_STRUCTURES, {
-			filter: (s) => ((s.structureType == STRUCTURE_CONTAINER
-				|| (s.structureType == STRUCTURE_STORAGE
-					&& s.room.energyAvailable != s.room.energyCapacityAvailable))
-				&& s.store[RESOURCE_ENERGY] > 50)
+			filter: (s) => ((s.structureType == STRUCTURE_CONTAINER || (s.structureType == STRUCTURE_STORAGE && (s.room.energyAvailable != s.room.energyCapacityAvailable || this.memory.role != 'lorry'))) && s.store[RESOURCE_ENERGY] >= (this.carryCapacity - _.sum(this.carry))*0.75)
 		});
 		// if one was found
 		if (container != undefined) {
@@ -92,8 +88,8 @@ Creep.prototype.getEnergy = function (useContainer, useSource, pickDropped=true)
 		var range;
 		let tombstones = this.room.find(FIND_TOMBSTONES).forEach(tombstone => {
 			if(_.sum(tombstone.store) > 0) {
-				if (dr_target == undefined
-				|| _.sum(tombstone.store) >= this.carryCapacity - _.sum(this.carry)) {
+				if (dr_target == undefined ||
+					_.sum(tombstone.store) >= this.carryCapacity - _.sum(this.carry)) {
 					dr_target = tombstone;
 					range = this.pos.getRangeTo(dr_target);
 				}
@@ -134,7 +130,8 @@ Creep.prototype.getEnergy = function (useContainer, useSource, pickDropped=true)
 		this.say('🌢: '+range);
 		this.moveTo(dr_target);
 		this.pickup(dr_target);
-	} else if (container == undefined && useSource) { // if no container was found and the Creep should look for Sources
+	}
+	if (useSource) { // if no container was found and the Creep should look for Sources
 		// find closest source
 		var source = this.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
 
@@ -143,17 +140,19 @@ Creep.prototype.getEnergy = function (useContainer, useSource, pickDropped=true)
 			// move towards it
 			this.moveTo(source);
 		}
-		if (this.pos.getRangeTo(container) <= 1) {
-			this.say('🎶');
-			this.moveTo(this.room.controller);
-		} else if (this.memory.role != 'harvester' && this.memory.role != 'lorry') {
-			var spawn = this.pos.findClosestByPath(FIND_STRUCTURES, {
-				filter: (s) => (s.structureType == STRUCTURE_SPAWN && s.room.energyAvailable == s.room.energyCapacityAvailable)
-			});
+		if (container != undefined) {
+			if (this.pos.getRangeTo(container) <= 1) {
+				this.say('🎶');
+				this.moveTo(this.room.controller);
+			} else if (this.memory.role != 'harvester' && this.memory.role != 'lorry') {
+				var spawn = this.pos.findClosestByPath(FIND_STRUCTURES, {
+					filter: (s) => (s.structureType == STRUCTURE_SPAWN && s.room.energyAvailable == s.room.energyCapacityAvailable)
+				});
 
-			if (spawn != undefined) {
-				if (this.withdraw(spawn, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-					this.moveTo(spawn);
+				if (spawn != undefined) {
+					if (this.withdraw(spawn, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+						this.moveTo(spawn);
+					}
 				}
 			}
 		}

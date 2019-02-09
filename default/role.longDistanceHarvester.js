@@ -14,14 +14,19 @@ module.exports = {
 		if (creep.memory.working) {
 			if (creep.room.name == creep.memory.home) {
 				var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-					filter: (s) => (s.structureType == STRUCTURE_SPAWN
-											|| s.structureType == STRUCTURE_EXTENSION
-											|| s.structureType == STRUCTURE_TOWER)
-											&& s.energy < s.energyCapacity
+					filter: (s) => (s.structureType == STRUCTURE_EXTENSION ||
+						s.structureType == STRUCTURE_TOWER) &&
+						s.energy < s.energyCapacity
 				});
 
 				if (target == undefined) {
-					target = creep.room.storage;
+					target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+						filter: (s) => (s.structureType == STRUCTURE_SPAWN &&
+							s.energy < s.energyCapacity)
+					});
+					if (target == undefined) {
+						target = creep.room.storage;
+					}
 				}
 
 				if (target != undefined) {
@@ -32,17 +37,17 @@ module.exports = {
 					}
 				} else {
 					var spawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-							filter: (s) => (s.structureType == STRUCTURE_SPAWN)
+						filter: (s) => (s.structureType == STRUCTURE_SPAWN)
 					});
 					if (spawn != undefined) {
-							if (creep.pos.getRangeTo(spawn) > 3) {
-									creep.moveTo(spawn);
-							} else {
-									creep.moveRandomWithin(spawn, 3);
-									if (creep.pos.getRangeTo(spawn) == 1) {
-											creep.drop(RESOURCE_ENERGY);
-									}
+						if (creep.pos.getRangeTo(spawn) > 3) {
+							creep.moveTo(spawn);
+						} else {
+							creep.moveRandomWithin(spawn, 3);
+							if (creep.pos.getRangeTo(spawn) == 1) {
+								creep.drop(RESOURCE_ENERGY);
 							}
+						}
 					}
 				}
 			} else {
@@ -56,10 +61,7 @@ module.exports = {
 				creep.moveTo(creep.pos.findClosestByRange(exit));
 				creep.say('🏠');
 			} else if (creep.room.name == creep.memory.target) {
-				let source = creep.room.find(FIND_SOURCES)[creep.memory.sourceIndex];
-				if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
-					creep.moveTo(source);
-				}
+				creep.getEnergy(false, true);
 			} else {
 				let exit = creep.room.findExitTo(creep.memory.target);
 				creep.moveTo(creep.pos.findClosestByRange(exit));

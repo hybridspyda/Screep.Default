@@ -1,4 +1,4 @@
-var roleBuilder = require('role.builder');
+var roleUpgrader = require('role.upgrader');
 var roleRepairer = require('role.repairer');
 
 module.exports = {
@@ -18,10 +18,10 @@ module.exports = {
 			if (creep.room.name == creep.memory.home) {
 				if (creep.room.controller.level >= 2) {
 					var structure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-						filter: (s) => (s.structureType == STRUCTURE_SPAWN
-									 || s.structureType == STRUCTURE_EXTENSION
-									 || s.structureType == STRUCTURE_TOWER)
-									 && s.energy < s.energyCapacity
+						filter: (s) => (s.structureType == STRUCTURE_SPAWN ||
+							s.structureType == STRUCTURE_EXTENSION ||
+							s.structureType == STRUCTURE_TOWER) &&
+							s.energy < s.energyCapacity
 					});
 
 					if (structure == undefined) {
@@ -33,10 +33,10 @@ module.exports = {
 							creep.moveTo(structure);
 						}
 					} else {
-						roleBuilder.run(creep);
+						roleRepairer.run(creep);
 					}
 				} else {
-					roleRepairer.run(creep);
+					roleUpgrader.run(creep);
 				}
 			} else {
 				var exit = creep.room.findExitTo(creep.memory.home);

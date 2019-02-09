@@ -12,19 +12,25 @@ module.exports = {
 		}
 
 		let container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-			filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
+			filter: (s) => s.structureType == STRUCTURE_CONTAINER &&
+										_.sum(s.store) > 0
 		});
 		if (creep.memory.working) {
 			if (creep.room.name == creep.memory.home) {
 				var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-					filter: (s) => (s.structureType == STRUCTURE_SPAWN
-								 || s.structureType == STRUCTURE_EXTENSION
-								 || s.structureType == STRUCTURE_TOWER)
-								 && s.energy < s.energyCapacity
+					filter: (s) => (s.structureType == STRUCTURE_EXTENSION ||
+						s.structureType == STRUCTURE_TOWER) &&
+						s.energy < s.energyCapacity
 				});
 
 				if (target == undefined) {
-					target = creep.room.storage;
+					target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+						filter: (s) => (s.structureType == STRUCTURE_SPAWN &&
+							s.energy < s.energyCapacity)
+					});
+					if (target == undefined) {
+						target = creep.room.storage;
+					}
 				}
 
 				if (target != undefined) {
@@ -36,11 +42,6 @@ module.exports = {
 						creep.say('🎶');
 						creep.moveRandom();
 					} else {
-						/*if(creep.room.controller) {
-							if(creep.signController(creep.room.controller, "Powered by HybridAI.") == ERR_NOT_IN_RANGE) {
-								creep.moveTo(creep.room.controller);
-							}
-						}*/
 						creep.moveTo(creep.room.controller);
 						if (creep.pos.getRangeTo(creep.room.controller) <= 3) {
 							creep.drop(RESOURCE_ENERGY);
